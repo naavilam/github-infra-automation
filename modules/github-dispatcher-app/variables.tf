@@ -16,3 +16,7 @@ variable "dispatch_shared_secret" {
   type      = string
   sensitive = true
 }
+
+variable "repo_root" {
+  type = string
+}
