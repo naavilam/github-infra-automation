@@ -1,24 +1,12 @@
 locals {
-  build_dir   = "${path.module}/.build"
   lambda_src = "${var.repo_root}/lambda/lambda_function.py"
 }
 
-resource "null_resource" "build_lambda" {
-  triggers = {
-    src_hash = filesha256(local.lambda_src)
-  }
-
-  provisioner "local-exec" {
-    command = <<EOT
-set -e
-rm -rf ${local.build_dir} && mkdir -p ${local.build_dir}/pkg
-python3 -m pip install --upgrade pip >/dev/null
-python3 -m pip install PyJWT -t ${local.build_dir}/pkg >/dev/null
-cp ${local.lambda_src} ${local.build_dir}/pkg/lambda_function.py
-cd ${local.build_dir}/pkg
-zip -qr ${local.build_dir}/lambda.zip .
-EOT
-  }
+# Gera o ZIP durante o PLAN/APPLY (sem depender de local-exec)
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_file = local.lambda_src
+  output_path = "${path.module}/lambda.zip"
 }
 
 resource "aws_lambda_function" "dispatcher" {
@@ -28,8 +16,8 @@ resource "aws_lambda_function" "dispatcher" {
   runtime       = "python3.11"
   timeout       = 30
 
-  filename         = "${local.build_dir}/lambda.zip"
-  source_code_hash = filebase64sha256("${local.build_dir}/lambda.zip")
+  filename         = data.archive_file.lambda_zip.output_path
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   environment {
     variables = {
@@ -41,7 +29,6 @@ resource "aws_lambda_function" "dispatcher" {
   }
 
   depends_on = [
-    null_resource.build_lambda,
     aws_secretsmanager_secret_version.credentials
   ]
 }
