@@ -32,6 +32,8 @@ module "app" {
   github_private_key_pem = var.github_private_key_pem
   dispatch_shared_secret = var.dispatch_shared_secret
   cors_origin            = var.cors_origin
+  env                    = var.env
+  name_prefix            = var.name_prefix
 }
 
 variable "cors_origin" { type = string }
