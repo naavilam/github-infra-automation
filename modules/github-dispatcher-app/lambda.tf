@@ -1,5 +1,5 @@
 locals {
-  lambda_src = "${var.repo_root}/lambda/lambda_function.py"
+  lambda_src = "${path.module}/lambda/lambda_function.py"
 }
 
 # Gera o ZIP durante o PLAN/APPLY (sem depender de local-exec)
