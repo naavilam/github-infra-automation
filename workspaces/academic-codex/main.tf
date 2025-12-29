@@ -34,6 +34,7 @@ module "app" {
   cors_origin            = var.cors_origin
   name_prefix            = var.name_prefix
   env                    = var.env
+  artifact_bucket        = var.artifact_bucket
 }
 
 
