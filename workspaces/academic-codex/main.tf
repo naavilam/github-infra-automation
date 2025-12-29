@@ -23,14 +23,9 @@ provider "aws" {
   }
 }
 
-locals {
-  repo_root = abspath("${path.root}/../..")
-}
-
 module "app" {
   source = "../../modules/github-dispatcher-app"
 
-  repo_root              = local.repo_root
   component              = var.component
   github_app_id          = var.github_app_id
   github_installation_id = var.github_installation_id
