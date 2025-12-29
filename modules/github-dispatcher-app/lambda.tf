@@ -1,7 +1,6 @@
 locals {
-  repo_root   = abspath("${path.root}/../..")
-  lambda_src  = "${local.repo_root}/lambda/lambda_function.py"
   build_dir   = "${path.module}/.build"
+  lambda_src = "${var.repo_root}/lambda/lambda_function.py"
 }
 
 resource "null_resource" "build_lambda" {

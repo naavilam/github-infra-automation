@@ -23,18 +23,25 @@ provider "aws" {
   }
 }
 
+locals {
+  repo_root = abspath("${path.root}/../..")
+}
+
 module "app" {
   source = "../../modules/github-dispatcher-app"
 
+  repo_root              = local.repo_root
   component              = var.component
   github_app_id          = var.github_app_id
   github_installation_id = var.github_installation_id
   github_private_key_pem = var.github_private_key_pem
   dispatch_shared_secret = var.dispatch_shared_secret
   cors_origin            = var.cors_origin
-  env                    = var.env
   name_prefix            = var.name_prefix
+  env                    = var.env
 }
+
+variable "repo_root" { type = string }
 
 variable "cors_origin" { type = string }
 

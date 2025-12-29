@@ -1,4 +1,5 @@
 variable "cors_origin" { type = string }
+variable "repo_root" { type = string }
 
 variable "env"         { type = string }
 variable "name_prefix" { type = string }
