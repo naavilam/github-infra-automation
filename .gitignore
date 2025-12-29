@@ -1,1 +1,87 @@
 .DS_Store
+# ============================
+# Terraform (core)
+# ============================
+
+# Diretório de estado local (NUNCA versionar)
+**/.terraform/
+.terraform/
+
+# Logs de crash
+crash.log
+crash.*.log
+
+# Estado local (quando não usa backend remoto)
+*.tfstate
+*.tfstate.*
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Arquivos CLI de configuração local
+.terraformrc
+terraform.rc
+
+# ============================
+# Terraform Cloud
+# ============================
+
+# NÃO ignorar:
+# .terraform.lock.hcl  ← ESTE DEVE SER VERSIONADO
+
+# ============================
+# Secrets / Variáveis sensíveis
+# ============================
+
+# Variáveis locais (quando usadas)
+*.tfvars
+*.tfvars.json
+
+# ============================
+# Build artifacts (Lambda etc)
+# ============================
+
+# Diretórios de build temporários
+.build/
+dist/
+tmp/
+tmp_*/
+
+# Zips gerados por build
+*.zip
+
+# ============================
+# Python (Lambda helpers)
+# ============================
+
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# ============================
+# OS / Editor
+# ============================
+
+.DS_Store
+Thumbs.db
+
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ============================
+# Misc
+# ============================
+
+# Logs locais
+*.log

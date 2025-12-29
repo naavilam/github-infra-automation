@@ -1,6 +1,6 @@
 terraform {
   cloud {
-    organization = "GitHub-Spaces"
+    organization = "GitHub-Space"
     workspaces { name = "Academic-Codex" }
   }
 
