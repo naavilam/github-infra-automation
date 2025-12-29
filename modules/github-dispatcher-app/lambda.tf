@@ -1,6 +1,30 @@
 locals {
+  build_dir  = "${path.module}/.build"
   lambda_src = "${path.module}/lambda/lambda_function.py"
 }
+
+resource "null_resource" "build_lambda" {
+  triggers = {
+    src_hash = filesha256(local.lambda_src)
+  }
+
+provisioner "local-exec" {
+    command = <<EOT
+set -e
+rm -rf ${local.build_dir}
+mkdir -p ${local.build_dir}/pkg
+
+python3 -m pip install --upgrade pip >/dev/null
+python3 -m pip install PyJWT -t ${local.build_dir}/pkg >/dev/null
+
+cp ${local.lambda_src} ${local.build_dir}/pkg/lambda_function.py
+
+cd ${local.build_dir}/pkg
+zip -qr ../lambda.zip .
+EOT
+  }
+}
+
 
 # Gera o ZIP durante o PLAN/APPLY (sem depender de local-exec)
 data "archive_file" "lambda_zip" {
