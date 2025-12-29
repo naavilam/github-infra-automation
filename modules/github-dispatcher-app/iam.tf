@@ -1,3 +1,6 @@
+
+
+
 data "aws_iam_policy_document" "assume_lambda" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -30,4 +33,51 @@ resource "aws_iam_role_policy" "lambda" {
   name   = "${var.component}-lambda-policy"
   role   = aws_iam_role.lambda.id
   policy = data.aws_iam_policy_document.lambda_policy.json
+}
+
+
+
+
+data "aws_iam_policy_document" "assume_codebuild" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["codebuild.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "codebuild" {
+  name               = "${var.component}-codebuild-role"
+  assume_role_policy = data.aws_iam_policy_document.assume_codebuild.json
+}
+
+data "aws_iam_policy_document" "codebuild_policy" {
+  statement {
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "s3:PutObject",
+      "s3:AbortMultipartUpload",
+      "s3:ListBucket",
+      "s3:GetBucketLocation"
+    ]
+    resources = [
+      aws_s3_bucket.lambda_artifacts.arn,
+      "${aws_s3_bucket.lambda_artifacts.arn}/*",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "codebuild" {
+  role   = aws_iam_role.codebuild.id
+  policy = data.aws_iam_policy_document.codebuild_policy.json
 }

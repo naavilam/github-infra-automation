@@ -1,0 +1,55 @@
+name: Build Lambda via CodeBuild
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment (app/workspace)"
+        required: true
+        type: choice
+        options:
+          - academic-codex
+          - quantum-computing
+          - high-energy
+          - quantum-materials
+  push:
+    paths:
+      - lambda/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    environment: ${{ inputs.environment }}
+
+    permissions:
+      id-token: write   # OIDC
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Zip source
+        run: |
+          cd lambda
+          zip -r ../source.zip .
+
+      - name: Upload source.zip to S3
+        run: |
+          aws s3 cp source.zip \
+            s3://${{ vars.ARTIFACT_BUCKET }}/${{ vars.SOURCE_ZIP_KEY }}
+
+      - name: Start CodeBuild
+        run: |
+          aws codebuild start-build \
+            --project-name ${{ vars.CODEBUILD_PROJECT }} \
+            --environment-variables-override \
+              name=SOURCE_ZIP_S3,value=s3://${{ vars.ARTIFACT_BUCKET }}/${{ vars.SOURCE_ZIP_KEY }},type=PLAINTEXT \
+              name=DEST_BUCKET,value=${{ vars.ARTIFACT_BUCKET }},type=PLAINTEXT \
+              name=DEST_KEY,value=${{ vars.LAMBDA_ZIP_KEY }},type=PLAINTEXT

@@ -1,6 +1,7 @@
 locals {
   build_dir  = "${path.module}/.build"
   lambda_src = "${path.module}/lambda/lambda_function.py"
+  lambda_s3_key = "${var.component}/lambda.zip"
 }
 
 resource "null_resource" "build_lambda" {
@@ -25,7 +26,6 @@ EOT
   }
 }
 
-
 # Gera o ZIP durante o PLAN/APPLY (sem depender de local-exec)
 data "archive_file" "lambda_zip" {
   type        = "zip"
@@ -33,15 +33,24 @@ data "archive_file" "lambda_zip" {
   output_path = "${path.module}/lambda.zip"
 }
 
+data "aws_s3_object" "lambda_zip" {
+  count  = var.deploy_lambda ? 1 : 0
+  bucket = aws_s3_bucket.lambda_artifacts.bucket
+  key    = local.lambda_s3_key
+}
+
 resource "aws_lambda_function" "dispatcher" {
+  count = var.deploy_lambda ? 1 : 0
+
   function_name = "${var.component}-dispatcher"
   role          = aws_iam_role.lambda.arn
   handler       = "lambda_function.handler"
   runtime       = "python3.11"
   timeout       = 30
 
-  filename         = data.archive_file.lambda_zip.output_path
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  s3_bucket         = aws_s3_bucket.lambda_artifacts.bucket
+  s3_key            = local.lambda_s3_key
+  s3_object_version = data.aws_s3_object.lambda_zip[0].version_id
 
   environment {
     variables = {
@@ -51,8 +60,4 @@ resource "aws_lambda_function" "dispatcher" {
       USER_AGENT             = var.component
     }
   }
-
-  depends_on = [
-    aws_secretsmanager_secret_version.credentials
-  ]
 }

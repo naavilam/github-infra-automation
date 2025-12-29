@@ -1,0 +1,181 @@
+name: Deploy (CodeBuild -> Terraform Cloud) [multi-app]
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "modules/github-dispatcher-app/**"
+      - "workspaces/**"
+      - ".github/workflows/deploy-all.yml"
+      - ".github/scripts/**"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: set
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Apps conhecidos
+          apps=(academic-codex high-energy quantum-computing quantum-materials)
+
+          # Arquivos alterados no push
+          git fetch --no-tags --prune --depth=2 origin "${GITHUB_REF_NAME}"
+          base="${{ github.event.before }}"
+          head="${{ github.sha }}"
+          changed="$(git diff --name-only "$base" "$head" || true)"
+
+          # Se mudou o módulo compartilhado, deploya todos
+          if echo "$changed" | grep -qE '^modules/github-dispatcher-app/'; then
+            selected=("${apps[@]}")
+          else
+            selected=()
+            for a in "${apps[@]}"; do
+              if echo "$changed" | grep -qE "^workspaces/${a}/"; then
+                selected+=("$a")
+              fi
+            done
+          fi
+
+          # Se nada bateu, não faz nada
+          if [ "${#selected[@]}" -eq 0 ]; then
+            echo 'matrix={"include":[]}' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # matrix include: [{app: "..."}]
+          json='{"include":['
+          first=1
+          for a in "${selected[@]}"; do
+            if [ $first -eq 0 ]; then json+=','; fi
+            first=0
+            json+="{\"app\":\"$a\"}"
+          done
+          json+=']}'
+
+          echo "matrix=$json" >> "$GITHUB_OUTPUT"
+          echo "$json"
+
+  deploy:
+    needs: detect
+    if: ${{ fromJson(needs.detect.outputs.matrix).include[0] != null }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
+
+    # IMPORTANTÍSSIMO: isso faz vars/secrets virem do environment do app
+    environment: ${{ matrix.app }}
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      TFC_ORG: ${{ vars.TFC_ORG }}
+      TFC_WORKSPACE: ${{ vars.TFC_WORKSPACE }}
+
+      ARTIFACT_BUCKET: ${{ vars.ARTIFACT_BUCKET }}
+      CODEBUILD_PROJECT: ${{ vars.CODEBUILD_PROJECT }}
+
+      SOURCE_ZIP_KEY: ${{ vars.TFC_WORKSPACE }}
+      LAMBDA_ZIP_KEY: ${{ vars.TFC_WORKSPACE }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- AWS auth (OIDC) ---
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Guardrail (print targets)
+        run: |
+          set -e
+          echo "app=${{ matrix.app }}"
+          echo "TFC_ORG=$TFC_ORG"
+          echo "TFC_WORKSPACE=$TFC_WORKSPACE"
+          echo "ARTIFACT_BUCKET=$ARTIFACT_BUCKET"
+          echo "CODEBUILD_PROJECT=$CODEBUILD_PROJECT"
+          echo "SOURCE_ZIP_KEY=$SOURCE_ZIP_KEY"
+          echo "LAMBDA_ZIP_KEY=$LAMBDA_ZIP_KEY"
+
+      # 1) Terraform Cloud - bootstrap
+      - name: Terraform Cloud - Bootstrap (deploy_lambda=false)
+        env:
+          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+        run: |
+          bash .github/scripts/tfc-run.sh \
+            --org "$TFC_ORG" \
+            --workspace "$TFC_WORKSPACE" \
+            --token "$TFC_TOKEN" \
+            --auto-apply \
+            --var "deploy_lambda=false"
+
+      # 2) Upload source.zip (input pro CodeBuild)
+      - name: Upload source.zip to S3
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          mkdir -p "$tmp/src"
+
+          # Ajuste o caminho do handler conforme seu repo
+          cp -v modules/github-dispatcher-app/lambda/lambda_function.py "$tmp/src/lambda_function.py"
+
+          (cd "$tmp/src" && zip -qr "$tmp/source.zip" .)
+
+          # Versiona o source por commit para evitar corrida
+          SRC_KEY="${SOURCE_ZIP_KEY%/}/source-${GITHUB_SHA}.zip"
+
+          aws s3 cp "$tmp/source.zip" "s3://${ARTIFACT_BUCKET}/${SRC_KEY}"
+
+          echo "SRC_S3=s3://${ARTIFACT_BUCKET}/${SRC_KEY}" >> "$GITHUB_ENV"
+          echo "SRC_KEY=$SRC_KEY" >> "$GITHUB_ENV"
+
+      # 2b) CodeBuild - build do lambda.zip e publica no S3
+      - name: CodeBuild - Build lambda.zip
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BUILD_ID=$(aws codebuild start-build \
+            --project-name "$CODEBUILD_PROJECT" \
+            --environment-variables-override \
+              name=SOURCE_ZIP_S3,value="${SRC_S3}",type=PLAINTEXT \
+              name=DEST_BUCKET,value="${ARTIFACT_BUCKET}",type=PLAINTEXT \
+              name=DEST_KEY,value="${LAMBDA_ZIP_KEY}",type=PLAINTEXT \
+            --query 'build.id' --output text)
+
+          echo "Started CodeBuild: $BUILD_ID"
+
+          aws codebuild wait build-complete --ids "$BUILD_ID"
+
+          STATUS=$(aws codebuild batch-get-builds \
+            --ids "$BUILD_ID" \
+            --query 'builds[0].buildStatus' --output text)
+
+          echo "CodeBuild status: $STATUS"
+          test "$STATUS" = "SUCCEEDED"
+
+      # 3) Terraform Cloud - deploy
+      - name: Terraform Cloud - Deploy (deploy_lambda=true)
+        env:
+          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+        run: |
+          bash .github/scripts/tfc-run.sh \
+            --org "$TFC_ORG" \
+            --workspace "$TFC_WORKSPACE" \
+            --token "$TFC_TOKEN" \
+            --auto-apply \
+            --var "deploy_lambda=true"

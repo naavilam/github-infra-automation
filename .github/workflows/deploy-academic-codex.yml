@@ -1,0 +1,109 @@
+name: Deploy Academic-Codex (CodeBuild -> Terraform Cloud)
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "modules/github-dispatcher-app/**"
+      - "workspaces/academic-codex/**"
+      - ".github/workflows/deploy-academic-codex.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      TFC_ORG: ${{ var.TFC_ORG }}
+      TFC_WORKSPACE: ${{ var.TFC_WORKSPACE }}
+      AWS_REGION: ${{ var.AWS_REGION }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --- AWS auth (escolha 1: OIDC) ---
+      - name: Configure AWS credentials (OIDC)
+        if: ${{ secrets.AWS_ROLE_TO_ASSUME != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # --- AWS auth (escolha 2: Access keys) ---
+      - name: Configure AWS credentials (keys)
+        if: ${{ secrets.AWS_ROLE_TO_ASSUME == '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # 1) Terraform Cloud Run (bootstrap: cria buckets/codebuild etc, sem lambda)
+      - name: Terraform Cloud - Bootstrap (deploy_lambda=false)
+        env:
+          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+        run: |
+          bash .github/scripts/tfc-run.sh \
+            --org "$TFC_ORG" \
+            --workspace "$TFC_WORKSPACE" \
+            --token "$TFC_TOKEN" \
+            --auto-apply \
+            --var "deploy_lambda=false"
+
+      # 2) Upload do source pro S3 + CodeBuild build do lambda.zip
+      - name: Package lambda source & upload to S3 (as build input)
+        run: |
+          set -e
+          mkdir -p /tmp/src
+          # ajuste aqui pro seu caminho real do handler
+          cp -v modules/github-dispatcher-app/lambda/lambda_function.py /tmp/src/lambda_function.py
+          cd /tmp/src
+          zip -qr /tmp/lambda-src.zip .
+          cd -
+
+          # Você precisa saber onde é o bucket de "inputs" pro CodeBuild.
+          # Pode ser o mesmo bucket de artifacts, com prefixo source/.
+          # Exemplo:
+          SRC_BUCKET= "${{ var.ARTIFACT_BUCKET }}""  # <-- coloque seu bucket real
+          SRC_KEY="source/${GITHUB_SHA}.zip"
+
+          aws s3 cp /tmp/lambda-src.zip "s3://${SRC_BUCKET}/${SRC_KEY}"
+          echo "SRC_S3=s3://${SRC_BUCKET}/${SRC_KEY}" >> $GITHUB_ENV
+          echo "SRC_BUCKET=${SRC_BUCKET}" >> $GITHUB_ENV
+          echo "SRC_KEY=${SRC_KEY}" >> $GITHUB_ENV
+
+      - name: CodeBuild - Build lambda.zip and publish to S3
+        run: |
+          set -e
+          PROJECT_NAME="academic-codex-app-lambda-builder"  # <-- nome do seu CodeBuild project
+          DEST_BUCKET="${SRC_BUCKET}"
+          DEST_KEY="academic-codex-app/lambda.zip"         # <-- key fixa versionada (por app)
+
+          BUILD_ID=$(aws codebuild start-build \
+            --project-name "$PROJECT_NAME" \
+            --environment-variables-override \
+              name=SOURCE_ZIP_S3,value="${SRC_S3}",type=PLAINTEXT \
+              name=DEST_BUCKET,value="${DEST_BUCKET}",type=PLAINTEXT \
+              name=DEST_KEY,value="${DEST_KEY}",type=PLAINTEXT \
+            --query 'build.id' --output text)
+
+          echo "Started CodeBuild: $BUILD_ID"
+
+          # wait
+          aws codebuild batch-get-builds --ids "$BUILD_ID" --query 'builds[0].buildStatus' --output text
+          aws codebuild wait build-complete --ids "$BUILD_ID"
+
+          STATUS=$(aws codebuild batch-get-builds --ids "$BUILD_ID" --query 'builds[0].buildStatus' --output text)
+          echo "CodeBuild status: $STATUS"
+          test "$STATUS" = "SUCCEEDED"
+
+      # 3) Terraform Cloud Run (deploy: agora sim atualiza lambda apontando para a nova versão S3)
+      - name: Terraform Cloud - Deploy (deploy_lambda=true)
+        env:
+          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+        run: |
+          bash .github/scripts/tfc-run.sh \
+            --org "$TFC_ORG" \
+            --workspace "$TFC_WORKSPACE" \
+            --token "$TFC_TOKEN" \
+            --auto-apply \
+            --var "deploy_lambda=true"
