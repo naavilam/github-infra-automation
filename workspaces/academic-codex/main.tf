@@ -11,7 +11,6 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
 
   default_tags {
     tags = {
@@ -19,7 +18,7 @@ provider "aws" {
       Component = var.component     # o app real
       Env       = var.env
       ManagedBy = "terraform"
-      Owner     = "GitHub-Spaces"
+      Owner     = "GitHub-Space"
     }
   }
 }
@@ -37,7 +36,6 @@ module "app" {
 
 variable "cors_origin" { type = string }
 
-variable "aws_region"  { type = string }
 variable "env"         { type = string }
 variable "name_prefix" { type = string }
 variable "component"   { type = string }
