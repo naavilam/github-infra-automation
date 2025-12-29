@@ -55,3 +55,7 @@ variable "dispatch_shared_secret" {
   type      = string
   sensitive = true
 }
+
+output "dispatch_url" {
+  value = module.app.dispatch_url
+}
