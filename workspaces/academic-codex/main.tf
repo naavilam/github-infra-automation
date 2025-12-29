@@ -41,7 +41,6 @@ module "app" {
   env                    = var.env
 }
 
-variable "repo_root" { type = string }
 
 variable "cors_origin" { type = string }
 
