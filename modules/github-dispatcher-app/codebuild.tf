@@ -43,7 +43,7 @@ phases:
       python: 3.11
   build:
     commands:
-      - set -euo pipefail
+      - set -euo 
       - echo "SOURCE_ZIP_S3=$SOURCE_ZIP_S3"
       - echo "DEST_BUCKET=$DEST_BUCKET"
       - echo "DEST_KEY=$DEST_KEY"
