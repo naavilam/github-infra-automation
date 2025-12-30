@@ -38,7 +38,6 @@ module "app" {
   lambda_zip_key         = var.lambda_zip_key
 }
 
-
 variable "cors_origin" { type = string }
 
 variable "env"         { type = string }
