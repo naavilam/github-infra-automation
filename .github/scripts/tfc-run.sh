@@ -63,17 +63,26 @@ RUN_VARS_JSON=$(python3 -c "$PYVARS" "${VARS[@]/#/}" 2>/dev/null || true)
 # Converte ["a=b","c=d"] -> objects
 RV="[]"
 if [[ ${#VARS[@]} -gt 0 ]]; then
-  RV=$(python3 - <<'PY'
+  RV=$(python3 - "${VARS[@]}" <<'PY'
 import json,sys
 vars=sys.argv[1:]
 out=[]
 for v in vars:
   k,val=v.split("=",1)
-  out.append({"type":"run-variables","attributes":{"key":k,"value":val,"category":"terraform","hcl":False,"sensitive":False}})
+  out.append({
+    "type":"run-variables",
+    "attributes":{
+      "key":k,"value":val,
+      "category":"terraform",
+      "hcl":False,
+      "sensitive":False
+    }
+  })
 print(json.dumps(out))
 PY
-"${VARS[@]}")
+)
 fi
+
 
 RUN_PAYLOAD=$(python3 - <<PY
 import json
