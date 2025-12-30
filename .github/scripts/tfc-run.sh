@@ -2,6 +2,7 @@
 set -euo pipefail
 
 AUTO_APPLY="false"
+
 VARS=()
 
 while [[ $# -gt 0 ]]; do
@@ -83,13 +84,16 @@ PY
 )
 fi
 
+# --- converte boolean bash -> boolean python ---
+PY_AUTO_APPLY="False"
+[[ "$AUTO_APPLY" == "true" ]] && PY_AUTO_APPLY="True"
 
 RUN_PAYLOAD=$(python3 - <<PY
 import json
 payload={
   "data":{
     "type":"runs",
-    "attributes":{"is-destroy":False,"auto-apply":${AUTO_APPLY}},
+    "attributes":{"is-destroy":False,"auto-apply":${PY_AUTO_APPLY}},
     "relationships":{
       "workspace":{"data":{"type":"workspaces","id":"${WS_ID}"}},
       "configuration-version":{"data":{"type":"configuration-versions","id":"${CV_ID}"}}
