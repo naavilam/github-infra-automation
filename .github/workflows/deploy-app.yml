@@ -138,7 +138,7 @@ jobs:
       - name: Upload source.zip to S3
         shell: bash
         run: |
-          set -euo
+          set -euo pipefail
           tmp="$(mktemp -d)"
           mkdir -p "$tmp/src"
 
@@ -159,7 +159,7 @@ jobs:
       - name: CodeBuild - Build lambda.zip
         shell: bash
         run: |
-          set -euo
+          set -euo pipefail
 
           BUILD_ID=$(aws codebuild start-build \
             --project-name "$CODEBUILD_PROJECT" \
