@@ -171,7 +171,24 @@ jobs:
 
           echo "Started CodeBuild: $BUILD_ID"
 
-          aws codebuild wait build-complete --ids "$BUILD_ID"
+          # wait manual (porque esse aws cli não tem "codebuild wait")
+          while true; do
+            STATUS=$(aws codebuild batch-get-builds \
+              --ids "$BUILD_ID" \
+              --query 'builds[0].buildStatus' \
+              --output text)
+
+            echo "CodeBuild status: $STATUS"
+
+            case "$STATUS" in
+              SUCCEEDED) break ;;
+              FAILED|FAULT|STOPPED|TIMED_OUT)
+                echo "CodeBuild failed with status: $STATUS" >&2
+                exit 1
+                ;;
+              *) sleep 5 ;;
+            esac
+          done
 
           STATUS=$(aws codebuild batch-get-builds \
             --ids "$BUILD_ID" \
