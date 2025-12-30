@@ -164,7 +164,7 @@ while true; do
   STATUS=$(echo "$R" | python3 -c 'import sys,json; print(json.load(sys.stdin)["data"]["attributes"]["status"])')
   echo "Status: $STATUS"
   case "$STATUS" in
-    applied) echo "OK: applied"; exit 0 ;;
+    applied|planned_and_finished) echo "OK: applied"; exit 0 ;;
     errored|canceled|discarded) echo "FAILED: $STATUS"; exit 1 ;;
   esac
   sleep 10
