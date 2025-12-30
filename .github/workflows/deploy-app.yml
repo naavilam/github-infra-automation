@@ -122,7 +122,7 @@ jobs:
       #       --auto-apply \
       #       --var "deploy_lambda=false"
 
-      1) Terraform Cloud - bootstrap
+      # 1) Terraform Cloud - bootstrap
       - name: Terraform Cloud - Bootstrap (deploy_lambda=false)
         env:
           TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
