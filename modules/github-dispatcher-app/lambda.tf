@@ -15,7 +15,7 @@ resource "aws_lambda_function" "dispatcher" {
 
   s3_bucket         = var.artifact_bucket
   s3_key            = var.lambda_zip_key
-  s3_object_version = data.aws_s3_object.lambda_zip[0].version_id
+  s3_object_version = var.deploy_lambda ? data.aws_s3_object.lambda_zip[0].version_id : null
 
   environment {
     variables = {
