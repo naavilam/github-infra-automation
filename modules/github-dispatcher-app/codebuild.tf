@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "lambda_artifacts" {
-  bucket = "${var.name_prefix}-${var.component}-lambda-artifacts"
+  bucket = var.artifact_bucket
 }
 
 resource "aws_s3_bucket_versioning" "lambda_artifacts" {
