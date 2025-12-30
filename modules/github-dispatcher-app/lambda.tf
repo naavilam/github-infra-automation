@@ -1,11 +1,7 @@
-locals {
-  lambda_s3_key = "${var.component}/lambda.zip"
-}
-
 data "aws_s3_object" "lambda_zip" {
   count  = var.deploy_lambda ? 1 : 0
-  bucket = aws_s3_bucket.lambda_artifacts.bucket
-  key    = local.lambda_s3_key
+  bucket = var.artifact_bucket
+  key    = var.lambda_zip_key
 }
 
 resource "aws_lambda_function" "dispatcher" {
