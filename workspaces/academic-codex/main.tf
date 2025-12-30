@@ -23,7 +23,6 @@ provider "aws" {
   }
 }
 
-
 module "app" {
   source = "../../modules/github-dispatcher-app"
 
