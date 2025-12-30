@@ -20,16 +20,11 @@ resource "aws_s3_bucket_public_access_block" "lambda_artifacts" {
 
 
 
-
-
-
 resource "aws_codebuild_project" "lambda_builder" {
   name         = "${var.component}-lambda-builder"
   service_role = aws_iam_role.codebuild.arn
 
-  artifacts {
-    type = "NO_ARTIFACTS"
-  }
+  artifacts { type = "NO_ARTIFACTS" }
 
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
@@ -38,9 +33,8 @@ resource "aws_codebuild_project" "lambda_builder" {
     image_pull_credentials_type = "CODEBUILD"
   }
 
-  # Fonte vem do GitHub Actions (vamos mandar o zip do repo via upload no build) -> NO_SOURCE
   source {
-    type      = "NO_SOURCE"
+    type = "NO_SOURCE"
     buildspec = <<YAML
 version: 0.2
 phases:
@@ -49,16 +43,24 @@ phases:
       python: 3.11
   build:
     commands:
-      - set -e
+      - set -euo pipefail
+      - echo "SOURCE_ZIP_S3=$SOURCE_ZIP_S3"
+      - echo "DEST_BUCKET=$DEST_BUCKET"
+      - echo "DEST_KEY=$DEST_KEY"
+
+      - mkdir -p /tmp/src
+      - aws s3 cp "$SOURCE_ZIP_S3" /tmp/source.zip
+      - unzip -q /tmp/source.zip -d /tmp/src
+
+      # ajuste ESTE caminho para onde o handler está dentro do source.zip
+      - test -f /tmp/src/modules/github-dispatcher-app/lambda/lambda_function.py
       - mkdir -p build/pkg
       - python -m pip install --upgrade pip
       - python -m pip install PyJWT -t build/pkg
-      - cp -v ${var.component}/lambda_function.py build/pkg/lambda_function.py || true
-      - ls -la
-      - cd build/pkg
-      - zip -qr ../lambda.zip .
-      - cd ..
-      - aws s3 cp lambda.zip s3://${aws_s3_bucket.lambda_artifacts.bucket}/${local.lambda_s3_key}
+      - cp -v /tmp/src/modules/github-dispatcher-app/lambda/lambda_function.py build/pkg/lambda_function.py
+
+      - (cd build/pkg && zip -qr ../lambda.zip .)
+      - aws s3 cp build/lambda.zip "s3://$DEST_BUCKET/$DEST_KEY"
 YAML
   }
 }

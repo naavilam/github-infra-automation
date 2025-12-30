@@ -35,6 +35,7 @@ module "app" {
   name_prefix            = var.name_prefix
   env                    = var.env
   artifact_bucket        = var.artifact_bucket
+  lambda_zip_key         = var.lambda_zip_key
 }
 
 
@@ -47,6 +48,7 @@ variable "component"   { type = string }
 variable "github_app_id"          { type = string }
 variable "github_installation_id" { type = string }
 variable "artifact_bucket"        { type = string }
+variable "lambda_zip_key"  { type = string }
 
 variable "github_private_key_pem" {
   type      = string
