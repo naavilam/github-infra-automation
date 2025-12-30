@@ -159,7 +159,7 @@ jobs:
       - name: CodeBuild - Build lambda.zip
         shell: bash
         run: |
-          set -euo pipefail
+          set -euo
 
           BUILD_ID=$(aws codebuild start-build \
             --project-name "$CODEBUILD_PROJECT" \
