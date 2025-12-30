@@ -41,7 +41,6 @@ module "app" {
 
 variable "cors_origin" { type = string }
 
-
 variable "env"         { type = string }
 variable "name_prefix" { type = string }
 variable "component"   { type = string }
