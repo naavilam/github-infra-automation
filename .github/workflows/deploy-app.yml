@@ -110,29 +110,29 @@ jobs:
           echo "SOURCE_ZIP_KEY=$SOURCE_ZIP_KEY"
           echo "LAMBDA_ZIP_KEY=$LAMBDA_ZIP_KEY"
 
-      - name: Terraform Cloud - Bootstrap (debug)
-        env:
-          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
-        run: |
-          set -x
-          bash -x .github/scripts/tfc-run.sh \
-            --org "$TFC_ORG" \
-            --workspace "$TFC_WORKSPACE" \
-            --token "$TFC_TOKEN" \
-            --auto-apply \
-            --var "deploy_lambda=false"
-
-      # 1) Terraform Cloud - bootstrap
-      # - name: Terraform Cloud - Bootstrap (deploy_lambda=false)
+      # - name: Terraform Cloud - Bootstrap (debug)
       #   env:
       #     TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
       #   run: |
-      #     bash .github/scripts/tfc-run.sh \
+      #     set -x
+      #     bash -x .github/scripts/tfc-run.sh \
       #       --org "$TFC_ORG" \
       #       --workspace "$TFC_WORKSPACE" \
       #       --token "$TFC_TOKEN" \
       #       --auto-apply \
       #       --var "deploy_lambda=false"
+
+      1) Terraform Cloud - bootstrap
+      - name: Terraform Cloud - Bootstrap (deploy_lambda=false)
+        env:
+          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+        run: |
+          bash .github/scripts/tfc-run.sh \
+            --org "$TFC_ORG" \
+            --workspace "$TFC_WORKSPACE" \
+            --token "$TFC_TOKEN" \
+            --auto-apply \
+            --var "deploy_lambda=false"
 
       # 2) Upload source.zip (input pro CodeBuild)
       - name: Upload source.zip to S3
@@ -159,7 +159,7 @@ jobs:
       - name: CodeBuild - Build lambda.zip
         shell: bash
         run: |
-          set -euo pipefail
+          set -euo
 
           BUILD_ID=$(aws codebuild start-build \
             --project-name "$CODEBUILD_PROJECT" \
