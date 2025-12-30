@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+DEBUG="${DEBUG:-0}"
+dbg() { [[ "$DEBUG" == "1" ]] && echo "[debug] $*" >&2; }
+
 AUTO_APPLY="false"
 
 VARS=()
@@ -13,8 +16,20 @@ while [[ $# -gt 0 ]]; do
     --auto-apply) AUTO_APPLY="true"; shift 1 ;;
     --var) VARS+=("$2"); shift 2 ;;
     *) echo "Unknown arg: $1"; exit 1 ;;
+    --var)
+      VARS+=("$2")
+      dbg "parsed --var: $2"
+      shift 2 ;;
   esac
 done
+
+dbg "AUTO_APPLY(raw)=$AUTO_APPLY"
+dbg "VARS(raw) count=${#VARS[@]}"
+for v in "${VARS[@]}"; do dbg "VARS(raw) item=$v"; done
+
+PY_AUTO_APPLY="False"
+[[ "$AUTO_APPLY" == "true" ]] && PY_AUTO_APPLY="True"
+dbg "PY_AUTO_APPLY=$PY_AUTO_APPLY"
 
 [[ -z "${ORG:-}" || -z "${WORKSPACE:-}" || -z "${TOKEN:-}" ]] && {
   echo "Missing --org/--workspace/--token"; exit 1;
@@ -104,11 +119,9 @@ print(json.dumps(payload))
 PY
 )
 
-# injeta run-variables como relationships (TFC aceita via "included")
-RUN_JSON=$(curl -sS \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H "Content-Type: application/vnd.api+json" \
-  -d "$(python3 - <<PY
+dbg "RUN_PAYLOAD(base)=$RUN_PAYLOAD"
+
+FINAL_RUN_PAYLOAD="$(python3 - <<PY
 import json
 run=json.loads('''$RUN_PAYLOAD''')
 included=json.loads('''$RV''')
@@ -116,14 +129,27 @@ if included:
   run["included"]=included
 print(json.dumps(run))
 PY
-)" \
+)"
+dbg "FINAL_RUN_PAYLOAD=$FINAL_RUN_PAYLOAD"
+
+
+# injeta run-variables como relationships (TFC aceita via "included")
+RUN_JSON=$(curl -sS \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d "$FINAL_RUN_PAYLOAD" \
   "${API}/runs")
+
+dbg "RV(included vars json)=$RV"
 
 RUN_ID=$(echo "$RUN_JSON" | python3 -c 'import sys,json; print(json.load(sys.stdin)["data"]["id"])')
 RUN_URL=$(echo "$RUN_JSON" | python3 -c 'import sys,json; print(json.load(sys.stdin)["data"]["links"]["self"])')
 
 echo "Run: ${RUN_ID}"
 echo "Run URL: https://app.terraform.io${RUN_URL}"
+
+
+
 
 # 5) wait loop
 while true; do
