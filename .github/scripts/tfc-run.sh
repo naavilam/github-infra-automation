@@ -2,7 +2,11 @@
 set -euo pipefail
 
 DEBUG="${DEBUG:-0}"
-dbg() { [[ "$DEBUG" == "1" ]] && echo "[debug] $*" >&2; }
+dbg() {
+  if [[ "${DEBUG:-0}" == "1" ]]; then
+    echo "[debug] $*" >&2
+  fi
+}
 
 AUTO_APPLY="false"
 
