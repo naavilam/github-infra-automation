@@ -53,12 +53,11 @@ phases:
       - unzip -q /tmp/source.zip -d /tmp/src
 
       # ajuste ESTE caminho para onde o handler está dentro do source.zip
-      - test -f /tmp/src/modules/github-dispatcher-app/lambda/lambda_function.py
+      - FOUND="$(find /tmp/src -name lambda_function.py -print -quit)" ; test -n "$FOUND" || (echo "lambda_function.py não encontrado dentro do source.zip" && find /tmp/src -maxdepth 4 -type f | head -200 && exit 1)
       - mkdir -p build/pkg
       - python -m pip install --upgrade pip
       - python -m pip install PyJWT -t build/pkg
-      - cp -v /tmp/src/modules/github-dispatcher-app/lambda/lambda_function.py build/pkg/lambda_function.py
-
+      - cp -v "$FOUND" build/pkg/lambda_function.py
       - (cd build/pkg && zip -qr ../lambda.zip .)
       - aws s3 cp build/lambda.zip "s3://$DEST_BUCKET/$DEST_KEY"
 YAML
