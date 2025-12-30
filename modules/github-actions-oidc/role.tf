@@ -1,7 +1,17 @@
-variable "github_owner" { type = string }  # ex: "naavilam" ou sua org
-variable "github_repo"  { type = string }  # ex: "infra-automation"
-variable "github_ref"   { type = string }  # ex: "refs/heads/main"
+variable "github_owner" { 
+    type = string 
+    default = "naavilam"
+}  
 
+variable "github_repo"  { 
+    type = string 
+    default = "infra-automation"
+}
+
+variable "github_ref"   { 
+    type = string 
+    default = "refs/heads/main"
+} 
 
 data "aws_iam_policy_document" "assume_github" {
   statement {
