@@ -72,9 +72,10 @@ data "aws_iam_policy_document" "codebuild_policy" {
       "s3:ListBucket",
       "s3:GetBucketLocation"
     ]
+
     resources = [
-      aws_s3_bucket.lambda_artifacts.arn,
-      "${aws_s3_bucket.lambda_artifacts.arn}/*",
+      "arn:aws:s3:::${var.artifact_bucket}",
+      "arn:aws:s3:::${var.artifact_bucket}/*",
     ]
   }
 }
