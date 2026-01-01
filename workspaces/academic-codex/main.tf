@@ -33,7 +33,8 @@ module "app" {
   cors_origin            = var.cors_origin
   env                    = var.env
   artifact_bucket        = var.artifact_bucket
-  dispatch_shared_token = var.dispatch_shared_token
+  dispatch_shared_token  = var.dispatch_shared_token
+  deploy_lambda          = var.deploy_lambda
 }
 
 variable "cors_origin" { type = string }
@@ -53,7 +54,13 @@ output "dispatch_url" {
   value = module.app.dispatch_url
 }
 
+variable "deploy_lambda" {
+  type        = bool
+  description = "Quando false, não cria/atualiza a Lambda (bootstrap de infra)."
+}
+
 variable "dispatch_shared_token" {
   type      = string
   sensitive = true
 }
+
