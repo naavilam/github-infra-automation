@@ -4,7 +4,7 @@ variable "artifact_bucket" {
   default     = "github-space-artifacts"
 }
 
-variable "dispatch_shared_secret" {
+variable "dispatch_shared_token" {
   type      = string
   sensitive = true
 }

@@ -53,7 +53,7 @@ def handler(event, context):
         return resp(200, {"ok": True})
 
     headers = {k.lower(): v for k, v in (event.get("headers") or {}).items()}
-    if headers.get("x-audit-key") != os.environ.get("DISPATCH_SHARED_SECRET"):
+    if headers.get("x-audit-key") != os.environ.get("dispatch_shared_token"):
         return resp(401, {"ok": False, "error": "unauthorized"})
 
     try:

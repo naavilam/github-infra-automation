@@ -34,7 +34,7 @@ module "app" {
   env                    = var.env
   artifact_bucket        = var.artifact_bucket
   lambda_zip_key         = var.lambda_zip_key
-  dispatch_shared_secret = var.dispatch_shared_secret
+  dispatch_shared_token = var.dispatch_shared_token
 }
 
 variable "cors_origin" { type = string }
@@ -57,7 +57,7 @@ output "dispatch_url" {
   value = module.app.dispatch_url
 }
 
-variable "dispatch_shared_secret" {
+variable "dispatch_shared_token" {
   type      = string
   sensitive = true
 }

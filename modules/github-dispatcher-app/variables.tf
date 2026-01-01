@@ -11,7 +11,7 @@ variable "github_private_key_pem" {
   sensitive = true
 }
 
-variable "dispatch_shared_secret" {
+variable "dispatch_shared_token" {
   type      = string
   sensitive = true
 }

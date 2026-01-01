@@ -20,7 +20,7 @@ resource "aws_lambda_function" "dispatcher" {
   environment {
     variables = {
       GITHUB_SECRET_ARN      = aws_secretsmanager_secret.credentials.arn
-      DISPATCH_SHARED_SECRET = var.dispatch_shared_secret
+      dispatch_shared_token = var.dispatch_shared_token
       CORS_ORIGIN            = var.cors_origin
       USER_AGENT             = var.component
     }
