@@ -1,7 +1,11 @@
+locals {
+  lambda_zip_key = "${var.component}/lambda.zip"
+}
+
 data "aws_s3_object" "lambda_zip" {
   count  = var.deploy_lambda ? 1 : 0
   bucket = var.artifact_bucket
-  key    = var.lambda_zip_key
+  key    = local.lambda_zip_key
 }
 
 resource "aws_lambda_function" "dispatcher" {
@@ -14,7 +18,7 @@ resource "aws_lambda_function" "dispatcher" {
   timeout       = 30
 
   s3_bucket         = var.artifact_bucket
-  s3_key            = var.lambda_zip_key
+  s3_key            = local.lambda_zip_key
   s3_object_version = var.deploy_lambda ? data.aws_s3_object.lambda_zip[0].version_id : null
 
   environment {
