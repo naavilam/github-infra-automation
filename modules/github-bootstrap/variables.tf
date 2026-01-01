@@ -8,3 +8,12 @@ variable "dispatch_shared_token" {
   type      = string
   sensitive = true
 }
+
+variable "cors_origin" { type = string }
+variable "env"         { type = string }
+
+variable "component" {
+  description = "Prefixo global para nomes de recursos do bootstrap (ex: github-space)"
+  type        = string
+  default     = "github-space"
+}
