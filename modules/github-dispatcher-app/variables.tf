@@ -21,3 +21,6 @@ variable "deploy_lambda" {
   description = "Quando false, não cria/atualiza a Lambda (bootstrap de infra)."
   default     = true
 }
+variable "lambda_zip_key" {
+  type = string
+}
