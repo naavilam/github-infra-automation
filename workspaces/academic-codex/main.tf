@@ -1,7 +1,7 @@
 terraform {
   cloud {
     organization = "GitHub-Space"
-    workspaces { name = "Academic-Codex" }
+    workspaces { name = "academic-codex" }
   }
 
   required_providers {
