@@ -86,7 +86,7 @@ jobs:
       ARTIFACT_BUCKET: ${{ vars.ARTIFACT_BUCKET }}
       CODEBUILD_PROJECT: ${{ vars.CODEBUILD_PROJECT }}
 
-      SOURCE_ZIP_KEY: ${{ vars.TFC_WORKSPACE }}
+      SOURCE_ZIP_PREFIX: ${{ vars.TFC_WORKSPACE }}
       LAMBDA_ZIP_KEY: ${{ vars.TFC_WORKSPACE }}/lambda.zip
 
     steps:
@@ -107,7 +107,7 @@ jobs:
           echo "TFC_WORKSPACE=$TFC_WORKSPACE"
           echo "ARTIFACT_BUCKET=$ARTIFACT_BUCKET"
           echo "CODEBUILD_PROJECT=$CODEBUILD_PROJECT"
-          echo "SOURCE_ZIP_KEY=$SOURCE_ZIP_KEY"
+          echo "SOURCE_ZIP_PREFIX=$SOURCE_ZIP_PREFIX"
           echo "LAMBDA_ZIP_KEY=$LAMBDA_ZIP_KEY"
 
       # - name: Terraform Cloud - Bootstrap (debug)
@@ -148,7 +148,7 @@ jobs:
           (cd "$tmp/src" && zip -qr "$tmp/source.zip" .)
 
           # Versiona o source por commit para evitar corrida
-          SRC_KEY="${SOURCE_ZIP_KEY%/}/source-${GITHUB_SHA}.zip"
+          SRC_KEY="${SOURCE_ZIP_PREFIX%/}/source-${GITHUB_SHA}.zip"
 
           aws s3 cp "$tmp/source.zip" "s3://${ARTIFACT_BUCKET}/${SRC_KEY}"
 
