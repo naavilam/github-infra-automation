@@ -34,6 +34,7 @@ module "app" {
   env                    = var.env
   artifact_bucket        = var.artifact_bucket
   lambda_zip_key         = var.lambda_zip_key
+  dispatch_shared_secret = var.dispatch_shared_secret
 }
 
 variable "cors_origin" { type = string }
@@ -54,4 +55,9 @@ variable "github_private_key_pem" {
 
 output "dispatch_url" {
   value = module.app.dispatch_url
+}
+
+variable "dispatch_shared_secret" {
+  type      = string
+  sensitive = true
 }
