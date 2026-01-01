@@ -11,8 +11,7 @@ terraform {
 }
 
 provider "aws" {
-  profile = "github"
-  region  = "us-east-2"
+
   default_tags {
     tags = {
       Namespace = var.name_prefix   # governança / agrupamento
@@ -23,7 +22,6 @@ provider "aws" {
     }
   }
 }
-
 
 module "app" {
   source = "../../modules/github-dispatcher-app"

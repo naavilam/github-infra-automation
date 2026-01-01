@@ -1,6 +1,4 @@
 provider "aws" {
-  profile = "github"
-  region = "us-east-2"
 
   default_tags {
     tags = {
@@ -8,4 +6,15 @@ provider "aws" {
       Owner     = "GitHub-Space"
     }
   }
+}
+
+terraform { 
+  cloud { 
+    
+    organization = "GitHub-Space" 
+
+    workspaces { 
+      name = "github-space-bootstrap" 
+    } 
+  } 
 }
