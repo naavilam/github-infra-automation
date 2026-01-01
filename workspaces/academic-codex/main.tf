@@ -14,7 +14,6 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Namespace = var.name_prefix   # governança / agrupamento
       Component = var.component     # o app real
       Env       = var.env
       ManagedBy = "terraform"
@@ -32,7 +31,6 @@ module "app" {
   github_private_key_pem = var.github_private_key_pem
   dispatch_shared_secret = var.dispatch_shared_secret
   cors_origin            = var.cors_origin
-  name_prefix            = var.name_prefix
   env                    = var.env
   artifact_bucket        = var.artifact_bucket
   lambda_zip_key         = var.lambda_zip_key
@@ -41,7 +39,6 @@ module "app" {
 variable "cors_origin" { type = string }
 
 variable "env"         { type = string }
-variable "name_prefix" { type = string }
 variable "component"   { type = string }
 
 variable "github_app_id"          { type = string }
