@@ -87,7 +87,7 @@ jobs:
       CODEBUILD_PROJECT: ${{ vars.CODEBUILD_PROJECT }}
 
       SOURCE_ZIP_KEY: ${{ vars.TFC_WORKSPACE }}
-      LAMBDA_ZIP_KEY: ${{ vars.LAMBDA_ZIP_KEY }}
+      LAMBDA_ZIP_KEY: ${{ vars.TFC_WORKSPACE }}/lambda.zip
 
     steps:
       - uses: actions/checkout@v4

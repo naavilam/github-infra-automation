@@ -26,6 +26,13 @@ jobs:
       id-token: write   # OIDC
       contents: read
 
+    env:
+      LAMBDA_ZIP_KEY: ${{ vars.TFC_WORKSPACE }}/lambda.zip
+      SOURCE_ZIP_KEY: ${{ vars.TFC_WORKSPACE }}/source.zip
+      ARTIFACT_BUCKET: ${{ vars.ARTIFACT_BUCKET }}
+      CODEBUILD_PROJECT: ${{ vars.CODEBUILD_PROJECT }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -33,7 +40,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: ${{ vars.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Zip source
         run: |
@@ -43,13 +50,13 @@ jobs:
       - name: Upload source.zip to S3
         run: |
           aws s3 cp source.zip \
-            s3://${{ vars.ARTIFACT_BUCKET }}/${{ vars.SOURCE_ZIP_KEY }}
+            s3://${{ env.ARTIFACT_BUCKET }}/${{ env.SOURCE_ZIP_KEY }}
 
       - name: Start CodeBuild
         run: |
           aws codebuild start-build \
-            --project-name ${{ vars.CODEBUILD_PROJECT }} \
+            --project-name ${{ env.CODEBUILD_PROJECT }} \
             --environment-variables-override \
-              name=SOURCE_ZIP_S3,value=s3://${{ vars.ARTIFACT_BUCKET }}/${{ vars.SOURCE_ZIP_KEY }},type=PLAINTEXT \
-              name=DEST_BUCKET,value=${{ vars.ARTIFACT_BUCKET }},type=PLAINTEXT \
-              name=DEST_KEY,value=${{ vars.LAMBDA_ZIP_KEY }},type=PLAINTEXT
+              name=SOURCE_ZIP_S3,value=s3://${{ env.ARTIFACT_BUCKET }}/${{ env.SOURCE_ZIP_KEY }},type=PLAINTEXT \
+              name=DEST_BUCKET,value=${{ env.ARTIFACT_BUCKET }},type=PLAINTEXT \
+              name=DEST_KEY,value=${{ env.LAMBDA_ZIP_KEY }},type=PLAINTEXT
