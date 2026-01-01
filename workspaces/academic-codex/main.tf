@@ -57,6 +57,7 @@ output "dispatch_url" {
 variable "deploy_lambda" {
   type        = bool
   description = "Quando false, não cria/atualiza a Lambda (bootstrap de infra)."
+  default     = false
 }
 
 variable "dispatch_shared_token" {
