@@ -18,12 +18,8 @@ while [[ $# -gt 0 ]]; do
     --workspace) WORKSPACE="$2"; shift 2 ;;
     --token) TOKEN="$2"; shift 2 ;;
     --auto-apply) AUTO_APPLY="true"; shift 1 ;;
-    --var) VARS+=("$2"); shift 2 ;;
+    --var) VARS+=("$2"); dbg "parsed --var: $2"; shift 2 ;;
     *) echo "Unknown arg: $1"; exit 1 ;;
-    --var)
-      VARS+=("$2")
-      dbg "parsed --var: $2"
-      shift 2 ;;
   esac
 done
 
@@ -73,29 +69,29 @@ curl -sS -X PUT \
   "$UPLOAD_URL" >/dev/null
 
 # 4) run payload (com vars)
-PYVARS='import json,sys; vars=sys.argv[1:]; out=[]; 
-for v in vars:
-  k,val=v.split("=",1)
-  out.append({"type":"run-variables","attributes":{"key":k,"value":val,"category":"terraform","hcl":False,"sensitive":False}})
-print(json.dumps(out))'
-RUN_VARS_JSON=$(python3 -c "$PYVARS" "${VARS[@]/#/}" 2>/dev/null || true)
 
 # Converte ["a=b","c=d"] -> objects
 RV="[]"
 if [[ ${#VARS[@]} -gt 0 ]]; then
   RV=$(python3 - "${VARS[@]}" <<'PY'
-import json,sys
+import json,sys,re
 vars=sys.argv[1:]
 out=[]
 for v in vars:
   k,val=v.split("=",1)
+  val_strip=val.strip()
+
+  # Heurística simples: se parece bool/null/número -> manda como HCL
+  is_hcl = val_strip.lower() in ("true","false","null") or re.fullmatch(r"-?\d+(\.\d+)?", val_strip) is not None
+
   out.append({
     "type":"run-variables",
     "attributes":{
-      "key":k,"value":val,
+      "key":k,
+      "value":val_strip,
       "category":"terraform",
-      "hcl":False,
-      "sensitive":False
+      "hcl": bool(is_hcl),
+      "sensitive": False
     }
   })
 print(json.dumps(out))

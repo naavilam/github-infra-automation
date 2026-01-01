@@ -110,7 +110,7 @@ jobs:
           echo "SOURCE_ZIP_PREFIX=$SOURCE_ZIP_PREFIX"
           echo "LAMBDA_ZIP_KEY=$LAMBDA_ZIP_KEY"
 
-      - name: Terraform Cloud - Bootstrap (debug)
+      - name: Terraform Cloud - Bootstrap (debug) (deploy_lambda=false)
         env:
           TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
         run: |
