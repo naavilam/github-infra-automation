@@ -41,7 +41,6 @@ data "aws_iam_policy_document" "assume_github" {
   }
 }
 
-
 resource "aws_iam_role" "github_actions" {
   name               = "github-actions-deployer"
   assume_role_policy = data.aws_iam_policy_document.assume_github.json
