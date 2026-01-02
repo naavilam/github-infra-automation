@@ -48,6 +48,7 @@ data "terraform_remote_state" "bootstrap" {
   }
 }
 
+
 locals {
   github_secret_arn = data.terraform_remote_state.bootstrap.outputs.github_dispatcher_secret_arn
 }
