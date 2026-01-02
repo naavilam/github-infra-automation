@@ -35,6 +35,21 @@ module "app" {
   artifact_bucket        = var.artifact_bucket
   dispatch_shared_token  = var.dispatch_shared_token
   deploy_lambda          = var.deploy_lambda
+  github_secret_arn      = local.github_secret_arn
+}
+
+data "terraform_remote_state" "bootstrap" {
+  backend = "remote"
+  config = {
+    organization = "GitHub-Space"
+    workspaces = {
+      name = "github-space-bootstrap"
+    }
+  }
+}
+
+locals {
+  github_secret_arn = data.terraform_remote_state.bootstrap.outputs.github_dispatcher_secret_arn
 }
 
 variable "cors_origin" { type = string }

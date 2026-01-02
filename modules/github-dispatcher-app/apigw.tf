@@ -38,3 +38,10 @@ resource "aws_lambda_permission" "apigw" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.api.execution_arn}/*/*"
 }
+
+resource "aws_apigatewayv2_route" "options" {
+  count     = var.deploy_lambda ? 1 : 0
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "OPTIONS /dispatch"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda[0].id}"
+}

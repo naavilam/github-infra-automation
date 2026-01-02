@@ -17,3 +17,18 @@ variable "component" {
   type        = string
   default     = "github-space"
 }
+
+variable "tfc_org" {
+  type    = string
+  default = "GitHub-Space"
+}
+
+variable "remote_state_consumers" {
+  type    = list(string)
+  default = [
+    "academic-codex",
+    "high-energy",
+    "quantum-computing",
+    "quantum-materials",
+  ]
+}

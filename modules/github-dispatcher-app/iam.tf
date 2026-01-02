@@ -25,7 +25,7 @@ data "aws_iam_policy_document" "lambda_policy" {
 
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_secretsmanager_secret.credentials.arn]
+    resources = [var.github_secret_arn]
   }
 }
 
