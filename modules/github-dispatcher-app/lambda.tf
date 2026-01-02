@@ -1,5 +1,5 @@
 locals {
-  lambda_zip_key = "${var.component}/lambda.zip"
+  lambda_zip_key = "dispatcher/lambda.zip"
 }
 
 data "aws_s3_object" "lambda_zip" {

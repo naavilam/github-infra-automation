@@ -1,0 +1,116 @@
+name: Deploy Bootstrap (Terraform Cloud -> CodeBuild -> S3)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "modules/github-bootstrap/**"
+      - "modules/github-dispatcher-app/**"
+      - ".github/workflows/deploy-bootstrap.yml"
+      - ".github/scripts/**"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-bootstrap:
+    runs-on: ubuntu-latest
+
+    # ✅ environment único (global)
+    environment: bootstrap
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+
+      # TFC (bootstrap)
+      TFC_ORG: ${{ vars.TFC_ORG }}
+      TFC_WORKSPACE: ${{ vars.TFC_WORKSPACE }} # ex: github-space-bootstrap
+
+      # Infra outputs (bootstrap cria / mantém)
+      ARTIFACT_BUCKET: ${{ vars.ARTIFACT_BUCKET }}      # ex: github-space-artifacts
+      CODEBUILD_PROJECT: ${{ vars.CODEBUILD_PROJECT }}  # ex: lambda-builder
+
+      # Keys globais (não por app)
+      SOURCE_ZIP_PREFIX: "dispatcher"
+      LAMBDA_ZIP_KEY: "dispatcher/lambda.zip"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Guardrail (print targets)
+        run: |
+          set -euo pipefail
+          echo "TFC_ORG=$TFC_ORG"
+          echo "TFC_WORKSPACE=$TFC_WORKSPACE"
+          echo "ARTIFACT_BUCKET=$ARTIFACT_BUCKET"
+          echo "CODEBUILD_PROJECT=$CODEBUILD_PROJECT"
+          echo "SOURCE_ZIP_PREFIX=$SOURCE_ZIP_PREFIX"
+          echo "LAMBDA_ZIP_KEY=$LAMBDA_ZIP_KEY"
+
+      # A) Terraform Cloud - Bootstrap infra (bucket/roles/codebuild/secret)
+      - name: Terraform Cloud - Apply bootstrap infra
+        env:
+          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+        run: |
+          bash .github/scripts/tfc-run.sh \
+            --org "$TFC_ORG" \
+            --workspace "$TFC_WORKSPACE" \
+            --token "$TFC_TOKEN" \
+            --auto-apply
+
+      # B) Build input source.zip (do handler) e sobe no bucket
+      - name: Upload source.zip to S3 (input for CodeBuild)
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          mkdir -p "$tmp/src"
+
+          cp -v modules/github-dispatcher-app/lambda/lambda_function.py "$tmp/src/lambda_function.py"
+          (cd "$tmp/src" && zip -qr "$tmp/source.zip" .)
+
+          SRC_KEY="${SOURCE_ZIP_PREFIX%/}/source-${GITHUB_SHA}.zip"
+          aws s3 cp "$tmp/source.zip" "s3://${ARTIFACT_BUCKET}/${SRC_KEY}"
+
+          echo "SRC_S3=s3://${ARTIFACT_BUCKET}/${SRC_KEY}" >> "$GITHUB_ENV"
+          echo "SRC_KEY=$SRC_KEY" >> "$GITHUB_ENV"
+
+      # C) CodeBuild - gera dispatcher/lambda.zip
+      - name: CodeBuild - Build lambda.zip
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BUILD_ID=$(aws codebuild start-build \
+            --project-name "$CODEBUILD_PROJECT" \
+            --environment-variables-override \
+              name=SOURCE_ZIP_S3,value="${SRC_S3}",type=PLAINTEXT \
+              name=DEST_BUCKET,value="${ARTIFACT_BUCKET}",type=PLAINTEXT \
+              name=DEST_KEY,value="${LAMBDA_ZIP_KEY}",type=PLAINTEXT \
+            --query 'build.id' --output text)
+
+          echo "Started CodeBuild: $BUILD_ID"
+
+          while true; do
+            STATUS=$(aws codebuild batch-get-builds \
+              --ids "$BUILD_ID" \
+              --query 'builds[0].buildStatus' \
+              --output text)
+
+            echo "CodeBuild status: $STATUS"
+            case "$STATUS" in
+              SUCCEEDED) break ;;
+              FAILED|FAULT|STOPPED|TIMED_OUT)
+                echo "CodeBuild failed with status: $STATUS" >&2
+                exit 1
+                ;;
+              *) sleep 5 ;;
+            esac
+          done
