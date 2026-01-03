@@ -1,4 +1,4 @@
-name: Deploy Bootstrap (Terraform Cloud -> CodeBuild -> S3)
+name: Deploy (Bootstrap -> Terraform Cloud -> CodeBuild -> S3)
 
 on:
   push:
