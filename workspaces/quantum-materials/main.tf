@@ -55,3 +55,11 @@ variable "dispatch_shared_token" {
   type      = string
   sensitive = true
 }
+
+output "dispatcher_invoke_arn" {
+  value = module.app.dispatcher_invoke_arn
+}
+
+output "dispatcher_function_name" {
+  value = module.app.dispatcher_function_name
+}

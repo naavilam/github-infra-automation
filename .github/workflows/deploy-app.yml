@@ -74,8 +74,6 @@ jobs:
       AWS_REGION: ${{ vars.AWS_REGION }}
       TFC_ORG: ${{ vars.TFC_ORG }}
 
-      # IMPORTANTÍSSIMO:
-      # não dependa mais de vars.TFC_WORKSPACE; use o nome do app = workspace
       TFC_WORKSPACE: ${{ matrix.app }}
 
     steps:

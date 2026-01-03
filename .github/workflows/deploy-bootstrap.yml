@@ -17,21 +17,17 @@ jobs:
   deploy-bootstrap:
     runs-on: ubuntu-latest
 
-    # ✅ environment único (global)
     environment: bootstrap
 
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
 
-      # TFC (bootstrap)
       TFC_ORG: ${{ vars.TFC_ORG }}
-      TFC_WORKSPACE: ${{ vars.TFC_WORKSPACE }} # ex: github-space-bootstrap
+      TFC_WORKSPACE: ${{ vars.TFC_WORKSPACE }}
 
-      # Infra outputs (bootstrap cria / mantém)
-      ARTIFACT_BUCKET: ${{ vars.ARTIFACT_BUCKET }}      # ex: github-space-artifacts
-      CODEBUILD_PROJECT: ${{ vars.CODEBUILD_PROJECT }}  # ex: lambda-builder
+      ARTIFACT_BUCKET: ${{ vars.ARTIFACT_BUCKET }}     
+      CODEBUILD_PROJECT: ${{ vars.CODEBUILD_PROJECT }} 
 
-      # Keys globais (não por app)
       SOURCE_ZIP_PREFIX: "dispatcher"
       LAMBDA_ZIP_KEY: "dispatcher/lambda.zip"
 
@@ -54,7 +50,6 @@ jobs:
           echo "SOURCE_ZIP_PREFIX=$SOURCE_ZIP_PREFIX"
           echo "LAMBDA_ZIP_KEY=$LAMBDA_ZIP_KEY"
 
-      # A) Terraform Cloud - Bootstrap infra (bucket/roles/codebuild/secret)
       - name: Terraform Cloud - Apply bootstrap infra
         env:
           TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
@@ -65,7 +60,6 @@ jobs:
             --token "$TFC_TOKEN" \
             --auto-apply
 
-      # B) Build input source.zip (do handler) e sobe no bucket
       - name: Upload source.zip to S3 (input for CodeBuild)
         shell: bash
         run: |
@@ -82,7 +76,6 @@ jobs:
           echo "SRC_S3=s3://${ARTIFACT_BUCKET}/${SRC_KEY}" >> "$GITHUB_ENV"
           echo "SRC_KEY=$SRC_KEY" >> "$GITHUB_ENV"
 
-      # C) CodeBuild - gera dispatcher/lambda.zip
       - name: CodeBuild - Build lambda.zip
         shell: bash
         run: |
