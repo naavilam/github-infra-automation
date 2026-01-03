@@ -13,7 +13,6 @@ permissions:
 
 env:
   AWS_REGION: us-east-2
-  # bucket onde já está indo o artifact do lambda.zip
   ARTIFACT_BUCKET: ${{ vars.ARTIFACT_BUCKET }}
   DEST_KEY: dispatcher/lambda.zip
 
@@ -39,14 +38,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          SRC="modules/github-dispatcher-app/lambda/lambda_function.py"
+          SRC="modules/github-lambda/dispatcher/lambda_function.py"
           test -f "$SRC" || (echo "missing $SRC" && exit 1)
 
           rm -rf build
           mkdir -p build/pkg
 
           python -m pip install --upgrade pip
-          # ✅ resolve RS256: precisa do cryptography dentro do pacote
           python -m pip install "PyJWT[crypto]" -t build/pkg
 
           cp -v "$SRC" build/pkg/lambda_function.py
