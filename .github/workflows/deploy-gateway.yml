@@ -1,0 +1,46 @@
+name: Deploy (Gateway -> Terraform Cloud)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "modules/github-gateway/**"
+      - "workspaces/gateway/**"
+      - ".github/workflows/deploy-gateway.yml"
+      - ".github/scripts/**"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    environment: gateway
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      TFC_ORG: ${{ vars.TFC_ORG }}
+
+      TFC_WORKSPACE: ${{ vars.TFC_WORKSPACE }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guardrail (print targets)
+        run: |
+          set -e
+          echo "TFC_ORG=$TFC_ORG"
+          echo "TFC_WORKSPACE=$TFC_WORKSPACE"
+          echo "AWS_REGION=$AWS_REGION"
+
+      - name: Terraform Cloud - Apply gateway infra
+        env:
+          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+        run: |
+          bash .github/scripts/tfc-run.sh \
+            --org "$TFC_ORG" \
+            --workspace "$TFC_WORKSPACE" \
+            --token "$TFC_TOKEN" \
+            --auto-apply
