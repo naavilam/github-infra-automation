@@ -35,7 +35,8 @@ data "aws_iam_policy_document" "assume_github" {
       variable = "token.actions.githubusercontent.com:sub"
       values = [
         "repo:${var.github_owner}/${var.github_repo}:ref:${var.github_ref}",
-        "repo:${var.github_owner}/${var.github_repo}:environment:*"
+        "repo:${var.github_owner}/${var.github_repo}:environment:*",
+        "repo:naavilam/hub:*"
       ]
     }
   }
