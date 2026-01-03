@@ -32,6 +32,27 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Debug OIDC env presence
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "repo=${GITHUB_REPOSITORY}"
+          echo "ref=${GITHUB_REF}"
+          echo "actor=${GITHUB_ACTOR}"
+          echo "event=${GITHUB_EVENT_NAME}"
+
+          if [[ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]]; then
+            echo "MISSING: ACTIONS_ID_TOKEN_REQUEST_URL"
+          else
+            echo "OK: ACTIONS_ID_TOKEN_REQUEST_URL is set"
+          fi
+
+          if [[ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then
+            echo "MISSING: ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+          else
+            echo "OK: ACTIONS_ID_TOKEN_REQUEST_TOKEN is set (won't print)"
+          fi
+          
       - name: Configure AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
