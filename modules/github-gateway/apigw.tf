@@ -1,6 +1,5 @@
 resource "aws_apigatewayv2_api" "api" {
-  for_each = local.backends
-  name          = "${each.key}-api"
+  name          = "github-gateway"
   protocol_type = "HTTP"
 
   cors_configuration {
@@ -17,7 +16,8 @@ resource "aws_apigatewayv2_stage" "default" {
 }
 
 resource "aws_apigatewayv2_integration" "lambda" {
-  for_each               = local.backends
+  for_each = local.backends
+
   api_id                 = aws_apigatewayv2_api.api.id
   integration_type       = "AWS_PROXY"
   integration_uri        = each.value.invoke_arn
@@ -26,9 +26,8 @@ resource "aws_apigatewayv2_integration" "lambda" {
 
 resource "aws_apigatewayv2_route" "dispatch" {
   for_each = local.backends
-  api_id   = aws_apigatewayv2_api.api.id
 
-  # Sugestão de path: /github/dispatch/<app>
+  api_id    = aws_apigatewayv2_api.api.id
   route_key = "POST /github/dispatch/${each.key}"
   target    = "integrations/${aws_apigatewayv2_integration.lambda[each.key].id}"
 }

@@ -16,7 +16,6 @@ provider "aws" {
     tags = {
       Namespace = var.component
       Component = var.component
-      Env       = var.env
       ManagedBy = "terraform"
       Owner     = "GitHub-Space"
     }
@@ -27,7 +26,6 @@ module "app" {
   source = "../../modules/github-dispatcher-app"
 
   component              = var.component
-  env                    = var.env
   cors_origin            = var.cors_origin
 
   artifact_bucket        = var.artifact_bucket
@@ -39,7 +37,6 @@ module "app" {
 }
 
 variable "cors_origin" { type = string }
-variable "env"         { type = string }
 variable "component"   { type = string }
 
 variable "github_app_id"          { type = string }

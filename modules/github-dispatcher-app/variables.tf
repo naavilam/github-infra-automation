@@ -1,5 +1,4 @@
 variable "cors_origin" { type = string }
-variable "env"         { type = string }
 variable "component"   { type = string }
 
 variable "artifact_bucket"        { type = string }
