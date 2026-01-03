@@ -1,6 +1,3 @@
-
-
-
 data "aws_iam_policy_document" "assume_lambda" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -25,7 +22,7 @@ data "aws_iam_policy_document" "lambda_policy" {
 
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = [var.github_secret_arn]
+    resources = [aws_secretsmanager_secret.credentials.arn]
   }
 }
 
