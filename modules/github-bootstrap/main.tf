@@ -13,7 +13,7 @@ terraform {
   cloud {
     organization = "GitHub-Space"
     workspaces {
-      name = "github-space-bootstrap"
+      name = "github-bootstrap"
     }
   }
 }

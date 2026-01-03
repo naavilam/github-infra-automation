@@ -28,12 +28,24 @@ module "app" {
   component              = var.component
   cors_origin            = var.cors_origin
 
-  artifact_bucket        = var.artifact_bucket
+  artifact_bucket        = local.artifact_bucket
   dispatch_shared_token  = var.dispatch_shared_token
 
   github_app_id          = var.github_app_id
   github_installation_id = var.github_installation_id
   github_private_key_pem = var.github_private_key_pem
+}
+
+data "terraform_remote_state" "bootstrap" {
+  backend = "remote"
+  config = {
+    organization = "GitHub-Space"
+    workspaces = { name = "github-bootstrap" }
+  }
+}
+
+locals {
+  artifact_bucket = data.terraform_remote_state.bootstrap.outputs.artifact_bucket
 }
 
 variable "cors_origin" { type = string }
