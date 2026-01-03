@@ -31,3 +31,18 @@ variable "remote_state_consumers" {
     "quantum-materials",
   ]
 }
+
+variable "github_owner" { 
+    type = string 
+    default = "naavilam"
+}  
+
+variable "github_repo"  { 
+    type = string 
+    default = "github-infra-automation"
+}
+
+variable "github_ref"   { 
+    type = string 
+    default = "refs/heads/main"
+}
