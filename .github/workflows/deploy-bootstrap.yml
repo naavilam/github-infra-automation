@@ -12,6 +12,10 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: deploy-bootstrap
+  cancel-in-progress: true
+
 jobs:
   deploy-bootstrap:
     runs-on: ubuntu-latest

@@ -11,6 +11,10 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: deploy-lambda
+  cancel-in-progress: true
+
 env:
   AWS_REGION: us-east-2
   ARTIFACT_BUCKET: ${{ vars.ARTIFACT_BUCKET }}
