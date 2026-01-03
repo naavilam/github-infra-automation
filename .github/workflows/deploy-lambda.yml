@@ -71,6 +71,7 @@ jobs:
 
           # build deps num ambiente compatível com AWS Lambda python 3.11
           docker run --rm \
+            --entrypoint "" \
             -v "$PWD":/var/task \
             -w /var/task \
             public.ecr.aws/lambda/python:3.11 \
