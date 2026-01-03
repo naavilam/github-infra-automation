@@ -19,7 +19,7 @@ jobs:
   deploy-bootstrap:
     runs-on: ubuntu-latest
 
-    environment: bootstrap
+    environment: github-bootstrap
 
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
