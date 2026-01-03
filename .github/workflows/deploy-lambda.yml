@@ -52,7 +52,7 @@ jobs:
           else
             echo "OK: ACTIONS_ID_TOKEN_REQUEST_TOKEN is set (won't print)"
           fi
-          
+
       - name: Configure AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -69,11 +69,17 @@ jobs:
           rm -rf build
           mkdir -p build/pkg
 
-          python -m pip install --upgrade pip
-          python -m pip install "PyJWT[crypto]" -t build/pkg
+          # build deps num ambiente compatível com AWS Lambda python 3.11
+          docker run --rm \
+            -v "$PWD":/var/task \
+            -w /var/task \
+            public.ecr.aws/lambda/python:3.11 \
+            bash -lc '
+              python -m pip install --upgrade pip &&
+              python -m pip install "PyJWT[crypto]" -t build/pkg
+            '
 
           cp -v "$SRC" build/pkg/lambda_function.py
-
           (cd build/pkg && zip -qr ../lambda.zip .)
 
       - name: Upload lambda.zip to S3
