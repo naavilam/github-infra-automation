@@ -1,0 +1,59 @@
+name: Deploy Lambda Functions (AWS)
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - "modules/github-lambda/**"
+      - ".github/workflows/deploy-lambda.yml"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-2
+  # bucket onde já está indo o artifact do lambda.zip
+  ARTIFACT_BUCKET: ${{ vars.ARTIFACT_BUCKET }}
+  DEST_KEY: dispatcher/lambda.zip
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build lambda.zip (includes deps)
+        run: |
+          set -euo pipefail
+
+          SRC="modules/github-dispatcher-app/lambda/lambda_function.py"
+          test -f "$SRC" || (echo "missing $SRC" && exit 1)
+
+          rm -rf build
+          mkdir -p build/pkg
+
+          python -m pip install --upgrade pip
+          # ✅ resolve RS256: precisa do cryptography dentro do pacote
+          python -m pip install "PyJWT[crypto]" -t build/pkg
+
+          cp -v "$SRC" build/pkg/lambda_function.py
+
+          (cd build/pkg && zip -qr ../lambda.zip .)
+
+      - name: Upload lambda.zip to S3
+        run: |
+          aws s3 cp build/lambda.zip "s3://${ARTIFACT_BUCKET}/${DEST_KEY}"
+          echo "uploaded: s3://${ARTIFACT_BUCKET}/${DEST_KEY}"

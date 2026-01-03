@@ -1,4 +1,4 @@
-name: Deploy (Apps -> Terraform Cloud) [multi-app]
+name: Deploy Apps (Terraform Cloud) [multi-app]
 
 on:
   push:

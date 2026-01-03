@@ -1,4 +1,4 @@
-name: Deploy (Gateway -> Terraform Cloud)
+name: Deploy Gateway (Terraform Cloud)
 
 on:
   push:

@@ -37,7 +37,7 @@ phases:
       - FOUND="$(find /tmp/src -name lambda_function.py -print -quit)" ; test -n "$FOUND" || (echo "lambda_function.py não encontrado dentro do source.zip" && find /tmp/src -maxdepth 4 -type f | head -200 && exit 1)
       - mkdir -p build/pkg
       - python -m pip install --upgrade pip
-      - python -m pip install PyJWT -t build/pkg
+      - python -m pip install "PyJWT[crypto]" -t build/pkg
       - cp -v "$FOUND" build/pkg/lambda_function.py
       - (cd build/pkg && zip -qr ../lambda.zip .)
       - aws s3 cp build/lambda.zip "s3://$DEST_BUCKET/$DEST_KEY"
