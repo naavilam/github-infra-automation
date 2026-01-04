@@ -34,6 +34,9 @@ module "app" {
   github_app_id          = var.github_app_id
   github_installation_id = var.github_installation_id
   github_private_key_pem = var.github_private_key_pem
+
+  github_owner           = var.github_owner
+  github_repo            = var.github_repo
 }
 
 data "terraform_remote_state" "bootstrap" {
@@ -71,4 +74,12 @@ output "dispatcher_invoke_arn" {
 
 output "dispatcher_function_name" {
   value = module.app.dispatcher_function_name
+}
+
+variable "github_owner" { 
+  type = string 
+}  
+
+variable "github_repo"  { 
+  type = string 
 }
