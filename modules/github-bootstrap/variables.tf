@@ -34,12 +34,10 @@ variable "remote_state_consumers" {
 
 variable "github_owner" { 
     type = string 
-    default = "naavilam"
 }  
 
 variable "github_repo"  { 
     type = string 
-    default = "github-infra-automation"
 }
 
 variable "github_ref"   { 

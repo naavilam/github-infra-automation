@@ -25,6 +25,9 @@ resource "aws_lambda_function" "dispatcher" {
       dispatch_shared_token  = var.dispatch_shared_token
       CORS_ORIGIN            = var.cors_origin
       USER_AGENT             = var.component
+
+      GITHUB_OWNER           = var.github_owner
+      GITHUB_REPO            = var.github_repo
     }
   }
 }

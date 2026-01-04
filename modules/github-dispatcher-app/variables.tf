@@ -20,3 +20,11 @@ variable "dispatch_shared_token" {
   type      = string
   sensitive = true
 }
+
+variable "github_owner" { 
+    type = string 
+}  
+
+variable "github_repo"  { 
+    type = string 
+}
