@@ -6,6 +6,8 @@ secrets = boto3.client("secretsmanager")
 GITHUB_API = "https://api.github.com"
 CORS_ORIGIN = os.environ.get("CORS_ORIGIN", "*")
 USER_AGENT = os.environ.get("USER_AGENT", "github-dispatcher")
+ORG  = os.environ["GITHUB_OWNER"]
+REPO = os.environ["GITHUB_REPO"]
 
 _cached = None
 
@@ -58,8 +60,6 @@ def handler(event, context):
 
     try:
         body = json.loads(event.get("body") or "{}")
-        org = body["org"]
-        repo = body["repo"]
         workflow = body["workflow"]
         ref = body.get("ref", "main")
         inputs = body.get("inputs", {})
@@ -83,7 +83,7 @@ def handler(event, context):
 
         st, txt = gh(
             "POST",
-            f"{GITHUB_API}/repos/{org}/{repo}/actions/workflows/{workflow}/dispatches",
+            f"{GITHUB_API}/repos/{ORG}/{REPO}/actions/workflows/{workflow}/dispatches",
             token,
             data={"ref": ref, "inputs": inputs},
         )
