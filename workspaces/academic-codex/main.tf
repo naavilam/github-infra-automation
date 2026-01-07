@@ -31,9 +31,9 @@ module "app" {
   artifact_bucket        = local.artifact_bucket
   dispatch_shared_token  = var.dispatch_shared_token
 
-  github_app_id          = var.github_app_id
-  github_installation_id = var.github_installation_id
-  github_private_key_pem = var.github_private_key_pem
+  github_app_id          = var.github_dispatcher_app_id
+  github_installation_id = var.github_dispatcher_installation_id
+  github_private_key_pem = var.github_dispatcher_private_key_pem
 
   github_owner           = var.github_owner
   github_repo            = var.github_repo
@@ -54,11 +54,11 @@ locals {
 variable "cors_origin" { type = string }
 variable "component"   { type = string }
 
-variable "github_app_id"          { type = string }
-variable "github_installation_id" { type = string }
+variable "github_dispatcher_app_id"          { type = string }
+variable "github_dispatcher_installation_id" { type = string }
 variable "artifact_bucket"        { type = string }
 
-variable "github_private_key_pem" {
+variable "github_dispatcher_private_key_pem" {
   type      = string
   sensitive = true
 }

@@ -1,7 +1,7 @@
 terraform {
   cloud {
     organization = "GitHub-Space"
-    workspaces { name = "quantum-computing" }
+    workspaces { name = "naavilam" }
   }
 
   required_providers {
@@ -31,9 +31,9 @@ module "app" {
   artifact_bucket        = local.artifact_bucket
   dispatch_shared_token  = var.dispatch_shared_token
 
-  github_app_id          = var.github_dispatcher_app_id
-  github_installation_id = var.github_dispatcher_installation_id
-  github_private_key_pem = var.github_dispatcher_private_key_pem
+  github_app_id           = var.github_dispatcher_app_id
+  github_installation_id  = var.github_dispatcher_installation_id
+  github_private_key_pem  = var.github_dispatcher_private_key_pem
 
   github_owner           = var.github_owner
   github_repo            = var.github_repo
