@@ -17,8 +17,6 @@ concurrency:
 
 env:
   AWS_REGION: us-east-2
-  ARTIFACT_BUCKET: ${{ vars.ARTIFACT_BUCKET }}
-  DEST_KEY: dispatcher/lambda.zip
 
 jobs:
   deploy:
@@ -27,39 +25,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Debug OIDC env presence
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "repo=${GITHUB_REPOSITORY}"
-          echo "ref=${GITHUB_REF}"
-          echo "actor=${GITHUB_ACTOR}"
-          echo "event=${GITHUB_EVENT_NAME}"
-
-          if [[ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]]; then
-            echo "MISSING: ACTIONS_ID_TOKEN_REQUEST_URL"
-          else
-            echo "OK: ACTIONS_ID_TOKEN_REQUEST_URL is set"
-          fi
-
-          if [[ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then
-            echo "MISSING: ACTIONS_ID_TOKEN_REQUEST_TOKEN"
-          else
-            echo "OK: ACTIONS_ID_TOKEN_REQUEST_TOKEN is set (won't print)"
-          fi
-
       - name: Configure AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Build lambda.zip (includes deps)
+      - name: Build lambda.zip
         run: |
           set -euo pipefail
 
@@ -69,7 +41,6 @@ jobs:
           rm -rf build
           mkdir -p build/pkg
 
-          # build deps num ambiente compatível com AWS Lambda python 3.11
           docker run --rm \
             --entrypoint "" \
             -v "$PWD":/var/task \
@@ -83,7 +54,23 @@ jobs:
           cp -v "$SRC" build/pkg/lambda_function.py
           (cd build/pkg && zip -qr ../lambda.zip .)
 
-      - name: Upload lambda.zip to S3
+      - name: Update dispatcher Lambdas
         run: |
-          aws s3 cp build/lambda.zip "s3://${ARTIFACT_BUCKET}/${DEST_KEY}"
-          echo "uploaded: s3://${ARTIFACT_BUCKET}/${DEST_KEY}"
+          set -euo pipefail
+
+          FUNCTIONS=(
+            academic-codex-dispatcher
+            high-energy-dispatcher
+            naavilam-dispatcher
+            quantum-computing-dispatcher
+            quantum-materials-dispatcher
+          )
+
+          for fn in "${FUNCTIONS[@]}"; do
+            echo "Updating $fn"
+
+            aws lambda update-function-code \
+              --function-name "$fn" \
+              --zip-file fileb://build/lambda.zip \
+              --region "$AWS_REGION"
+          done
