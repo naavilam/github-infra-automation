@@ -16,13 +16,13 @@ resource "aws_iam_role" "lambda" {
 
 data "aws_iam_policy_document" "lambda_policy" {
   statement {
-    actions = ["logs:CreateLogGroup","logs:CreateLogStream","logs:PutLogEvents"]
-    resources = ["*"]
-  }
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
 
-  statement {
-    actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_secretsmanager_secret.credentials.arn]
+    resources = ["*"]
   }
 }
 
@@ -31,5 +31,3 @@ resource "aws_iam_role_policy" "lambda" {
   role   = aws_iam_role.lambda.id
   policy = data.aws_iam_policy_document.lambda_policy.json
 }
-
-

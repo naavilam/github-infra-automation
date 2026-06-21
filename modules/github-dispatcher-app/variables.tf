@@ -3,15 +3,7 @@ variable "component"   { type = string }
 
 variable "artifact_bucket"        { type = string }
 
-variable "github_app_id" {
-  type = string
-}
-
-variable "github_installation_id" {
-  type = string
-}
-
-variable "github_private_key_pem" {
+variable "github_credentials" {
   type      = string
   sensitive = true
 }

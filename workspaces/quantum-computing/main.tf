@@ -31,9 +31,7 @@ module "app" {
   artifact_bucket        = local.artifact_bucket
   dispatch_shared_token  = var.dispatch_shared_token
 
-  github_app_id          = var.github_dispatcher_app_id
-  github_installation_id = var.github_dispatcher_installation_id
-  github_private_key_pem = var.github_dispatcher_private_key_pem
+  github_credentials    = var.github_credentials
 
   github_owner           = var.github_owner
   github_repo            = var.github_repo
@@ -82,4 +80,9 @@ variable "github_owner" {
 
 variable "github_repo"  { 
   type = string 
+}
+
+variable "github_credentials" {
+  type      = string
+  sensitive = true
 }
